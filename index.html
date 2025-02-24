@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pratham's bot</title>
+    <style>
+        /* Apple-like Font */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #chat-container {
+            width: 400px;
+            background: white;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #chat-box {
+            width: 100%;
+            height: 300px;
+            overflow-y: auto;
+            border-radius: 8px;
+            padding: 10px;
+            background: #f9f9f9;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message {
+            padding: 10px 14px;
+            border-radius: 18px;
+            margin-bottom: 8px;
+            max-width: 80%;
+            word-wrap: break-word;
+        }
+
+        .user-message {
+            background: #007aff;
+            color: white;
+            align-self: flex-end;
+        }
+
+        .bot-message {
+            background: #e5e5ea;
+            color: black;
+            align-self: flex-start;
+        }
+
+        #input-container {
+            display: flex;
+            margin-top: 10px;
+            gap: 8px;
+        }
+
+        #user-input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        #send-btn {
+            padding: 10px 16px;
+            background-color: #007aff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        #send-btn:hover {
+            background-color: #005ecb;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="chat-container">
+        <h3 style="text-align: center; margin-bottom: 10px;">Pratham's Chatbot</h3>
+        <div id="chat-box"></div>
+        <div id="input-container">
+            <input type="text" id="user-input" placeholder="Type a message..." />
+            <button id="send-btn">Send</button>
+        </div>
+    </div>
+
+    <script>
+        const GEMINI_API_KEY = "AIzaSyC-2QLxQMYrZUnMWZjQDpu0UHIP7Q9kswo";
+        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+        document.getElementById('user-input').addEventListener('keypress', function(event) {
+            if (event.key === "Enter") sendMessage();
+        });
+
+        function sendMessage() {
+            let userInput = document.getElementById('user-input').value.trim();
+            if (!userInput) return;
+
+            let chatBox = document.getElementById('chat-box');
+
+            // Append User Message
+            let userMessage = document.createElement('div');
+            userMessage.className = "message user-message";
+            userMessage.textContent = userInput;
+            chatBox.appendChild(userMessage);
+
+            // Clear input field
+            document.getElementById('user-input').value = '';
+            
+            // Auto-scroll
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Call Gemini API
+            fetch(GEMINI_API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{ parts: [{ text: userInput }] }]
+                })
+            })
+            .then(response => response.json())
+            .then(result => {
+                let botResponse = result?.candidates?.[0]?.content?.parts?.[0]?.text || "Sorry, I couldn't understand that.";
+                
+                // Remove ** formatting
+                botResponse = botResponse.replace(/\*\*/g, '');
+
+                // Append Bot Response
+                let botMessage = document.createElement('div');
+                botMessage.className = "message bot-message";
+                botMessage.textContent = botResponse;
+                chatBox.appendChild(botMessage);
+
+                // Auto-scroll
+                chatBox.scrollTop = chatBox.scrollHeight;
+            })
+            .catch(error => {
+                console.error('Error calling Gemini API:', error);
+            });
+        }
+    </script>
+
+</body>
+</html>
